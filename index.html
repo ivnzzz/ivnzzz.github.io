@@ -104,6 +104,13 @@ input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px soli
   background:var(--bg);color:var(--text);font-size:16px}
 .modal .act{margin-top:14px}
 
+/* settings */
+.setlab{margin:18px 0 8px;color:var(--muted);font-size:14px}
+.swatches{display:flex;gap:12px;flex-wrap:wrap}
+.sw{width:40px;height:40px;border-radius:50%;border:0;padding:0}
+.sw.on{outline:3px solid var(--text);outline-offset:2px}
+.setlab + .clear{margin-top:0}
+
 /* install gate */
 #gate{display:none;text-align:center;max-width:380px;margin:0 auto;padding:56px 8px}
 body.gated #gate{display:block}
@@ -128,13 +135,9 @@ body.gated .wrap,body.gated .bottom{display:none}
 <div class="wrap">
   <header>
     <h1>Ocjene</h1>
-    <button class="iconbtn" id="theme" aria-label="Promijeni temu">🌓</button>
+    <button class="iconbtn" id="settingsBtn" aria-label="Postavke">⚙️</button>
   </header>
   <div id="list"></div>
-  <div class="foot">
-    <button id="export">Izvezi kopiju</button><span>·</span><button id="import">Uvezi kopiju</button>
-    <input type="file" id="file" accept="application/json,.json" hidden>
-  </div>
 </div>
 
 <div class="bottom">
@@ -167,6 +170,30 @@ body.gated .wrap,body.gated .bottom{display:none}
       <button class="cancel" id="shCancel">Otkaži</button>
       <button class="save" id="shSave">Sačuvaj</button>
     </div>
+  </div>
+</div>
+
+<!-- settings -->
+<div class="overlay" id="settings">
+  <div class="panel" role="dialog" aria-modal="true">
+    <div class="ph"><h2>Postavke</h2></div>
+    <div class="setlab">Izgled</div>
+    <div class="chips" id="modeRow">
+      <button class="chip" data-mode="auto">Auto</button>
+      <button class="chip" data-mode="light">Svijetlo</button>
+      <button class="chip" data-mode="dark">Tamno</button>
+    </div>
+    <div class="setlab">Boja</div>
+    <div class="swatches" id="accentRow"></div>
+    <div class="setlab">Podaci</div>
+    <div class="chips">
+      <button class="chip" id="export">Izvezi kopiju</button>
+      <button class="chip" id="import">Uvezi kopiju</button>
+    </div>
+    <input type="file" id="file" accept="application/json,.json" hidden>
+    <div class="setlab">Nova školska godina</div>
+    <button class="clear" id="wipe">Obriši sve predmete</button>
+    <div class="act"><button class="save" id="setDone">Gotovo</button></div>
   </div>
 </div>
 
@@ -257,8 +284,9 @@ function render(){
 
   const finals = state.subjects.map(finalOf).filter(x => x !== null);
   const o = mean(finals);
+  const fail = finals.includes(1);
   $('#lab').textContent = o === null ? 'Prosjek' : label(o, finals);
-  $('#num').textContent = o === null ? '–' : fmt(o);
+  $('#num').textContent = o === null ? '–' : fail ? '1' : fmt(o);
 }
 
 $('#list').addEventListener('click', e => {
@@ -292,6 +320,7 @@ addEventListener('popstate', () => {
   if (ignorePop) { ignorePop = false; return; }
   closeName();
   if (sheetOpen) hideSheet();
+  if (settingsOpen) hideSettings();
 });
 
 function renderSheet(){
@@ -390,20 +419,70 @@ $('#add').addEventListener('click', () => {
   });
 });
 
-/* ---------- theme ---------- */
-function applyTheme(t){
-  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-  else delete document.documentElement.dataset.theme;
+/* ---------- settings: theme, colour, wipe ---------- */
+const ACCENTS = {
+  indigo: ['#4f46e5', '#818cf8'], blue: ['#2563eb', '#60a5fa'], green: ['#059669', '#34d399'],
+  purple: ['#7c3aed', '#a78bfa'], pink: ['#db2777', '#f472b6'], orange: ['#ea580c', '#fb923c']
+};
+const ACCENT_KEY = 'ocjene-accent';
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const lsSet = (k, v) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch(e){} };
+let mode = ['light', 'dark'].includes(lsGet(THEME_KEY)) ? lsGet(THEME_KEY) : 'auto';
+let accent = ACCENTS[lsGet(ACCENT_KEY)] ? lsGet(ACCENT_KEY) : 'indigo';
+const isDark = () => mode === 'dark' || (mode === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+
+function applyLook(){
+  const root = document.documentElement;
+  if (mode === 'auto') delete root.dataset.theme; else root.dataset.theme = mode;
+  const dark = isDark(), c = ACCENTS[accent][dark ? 1 : 0];
+  root.style.setProperty('--accent', c);
+  root.style.setProperty('--on-accent', dark ? '#10112a' : '#fff');
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', c);
 }
-let theme = null;
-try { theme = localStorage.getItem(THEME_KEY); } catch(e){}
-applyTheme(theme);
-$('#theme').addEventListener('click', () => {
-  const cur = document.documentElement.dataset.theme
-    || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  const next = cur === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
-  try { localStorage.setItem(THEME_KEY, next); } catch(e){}
+function renderSettings(){
+  document.querySelectorAll('#modeRow .chip').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+  $('#accentRow').innerHTML = Object.keys(ACCENTS).map(k =>
+    `<button class="sw${k === accent ? ' on' : ''}" data-k="${k}" aria-label="${k}" style="background:${ACCENTS[k][isDark() ? 1 : 0]}"></button>`).join('');
+}
+$('#modeRow').addEventListener('click', e => {
+  const b = e.target.closest('[data-mode]');
+  if (!b) return;
+  mode = b.dataset.mode;
+  lsSet(THEME_KEY, mode === 'auto' ? null : mode);
+  applyLook(); renderSettings();
+});
+$('#accentRow').addEventListener('click', e => {
+  const b = e.target.closest('[data-k]');
+  if (!b) return;
+  accent = b.dataset.k;
+  lsSet(ACCENT_KEY, accent);
+  applyLook(); renderSettings();
+});
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { applyLook(); renderSettings(); }); } catch(e){}
+applyLook();
+
+let settingsOpen = false;
+function openSettings(){
+  renderSettings();
+  $('#settings').classList.add('open');
+  settingsOpen = true;
+  history.pushState({ settings: 1 }, '');
+}
+function hideSettings(){ settingsOpen = false; $('#settings').classList.remove('open'); }
+function closeSettings(){
+  if (!settingsOpen) return;
+  hideSettings();
+  if (history.state && history.state.settings) { ignorePop = true; history.back(); }
+}
+$('#settingsBtn').addEventListener('click', openSettings);
+$('#setDone').addEventListener('click', closeSettings);
+$('#settings').addEventListener('click', e => { if (e.target.id === 'settings') closeSettings(); });
+$('#wipe').addEventListener('click', () => {
+  if (!state.subjects.length) { closeSettings(); return; }
+  if (!confirm('Obrisati SVE predmete i ocjene? Ovo se ne može poništiti.\n\nAko želiš zadržati podatke, prvo izvezi kopiju.')) return;
+  state = { subjects: [] };
+  save(); render(); closeSettings();
 });
 
 /* ---------- export / import ---------- */
