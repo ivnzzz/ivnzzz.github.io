@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ocjene</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ocjene">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#4f46e5">
+<style>
+:root{
+  --bg:#f4f5fb; --card:#fff; --text:#1a1b2e; --muted:#6b6f85; --line:#e4e6f2;
+  --accent:#4f46e5; --accent-text:#fff; --chip:#eef0fb; --danger:#dc2626;
+  --g1:#ef4444; --g2:#f97316; --g3:#eab308; --g4:#22c55e; --g5:#10b981;
+}
+:root[data-theme="dark"]{
+  --bg:#0f1020; --card:#1a1b30; --text:#eceefb; --muted:#9a9eb8; --line:#2a2c47;
+  --accent:#818cf8; --accent-text:#10112a; --chip:#25274a; --danger:#f87171;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1020; --card:#1a1b30; --text:#eceefb; --muted:#9a9eb8; --line:#2a2c47;
+    --accent:#818cf8; --accent-text:#10112a; --chip:#25274a; --danger:#f87171;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px)}
+.wrap{max-width:560px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 0 8px}
+h1{font-size:22px;margin:0}
+.icons button{background:none;border:0;font-size:20px;padding:8px;color:var(--text);cursor:pointer}
+.hero{background:var(--accent);color:var(--accent-text);border-radius:20px;padding:22px;text-align:center;margin:8px 0 16px}
+.hero .big{font-size:56px;font-weight:800;line-height:1}
+.hero .sub{opacity:.85;margin-top:6px;font-size:14px}
+.add{display:flex;gap:8px;margin-bottom:16px}
+input[type=text]{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--text);font-size:16px}
+.btn{padding:12px 16px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-text);
+  font-weight:600;font-size:16px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.name{font-weight:700;font-size:17px;overflow-wrap:anywhere}
+.avg{font-weight:800;font-size:20px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;min-height:30px}
+.chip{background:var(--chip);border:0;border-radius:10px;padding:5px 11px;font-weight:700;font-size:15px;color:var(--text);cursor:pointer}
+.empty{color:var(--muted);font-size:14px;align-self:center}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pad button{padding:12px 0;border:0;border-radius:12px;font-size:20px;font-weight:800;color:#fff;cursor:pointer}
+.pad button:active{transform:scale(.95)}
+.pad .n1{background:var(--g1)}.pad .n2{background:var(--g2)}.pad .n3{background:var(--g3)}
+.pad .n4{background:var(--g4)}.pad .n5{background:var(--g5)}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:14px;color:var(--muted);gap:8px}
+select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:14px}
+.del{background:none;border:0;color:var(--danger);font-size:14px;cursor:pointer;padding:6px}
+.hint{color:var(--muted);font-size:13px;text-align:center;margin-top:20px}
+.tools{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.tools button{background:none;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 12px;font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Ocjene</h1>
+    <div class="icons"><button id="theme" title="Tema" aria-label="Promijeni temu">🌓</button></div>
+  </header>
+
+  <div class="hero">
+    <div class="big" id="overall">–</div>
+    <div class="sub" id="overallSub">Dodaj predmet i ocjene</div>
+  </div>
+
+  <form class="add" id="addForm">
+    <input type="text" id="newName" placeholder="Novi predmet (npr. Matematika)" maxlength="40" autocomplete="off">
+    <button class="btn" type="submit">Dodaj</button>
+  </form>
+
+  <div id="list"></div>
+
+  <div class="tools">
+    <button id="export">Izvezi podatke</button>
+    <button id="import">Uvezi podatke</button>
+    <input type="file" id="file" accept="application/json,.json" hidden>
+  </div>
+  <p class="hint">Podaci se spremaju samo na ovom uređaju. Povremeno izvezi sigurnosnu kopiju.<br>Zaključna ocjena = zaokruženi prosjek predmeta; možeš je promijeniti.</p>
+</div>
+
+<script>
+const KEY = 'ocjene-v1', THEME_KEY = 'ocjene-theme';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => n.toFixed(2).replace('.', ',');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+let state = load();
+function load(){
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.subjects)) return s;
+  } catch(e){}
+  return { subjects: [] };
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+// Empty subjects are skipped, never counted as zero.
+const finalOf = s => {
+  if (s.final) return s.final;
+  const m = mean(s.grades);
+  return m === null ? null : Math.min(5, Math.max(1, Math.round(m + 1e-9)));
+};
+
+function render(){
+  const list = $('#list');
+  list.innerHTML = state.subjects.map(s => {
+    const m = mean(s.grades), f = finalOf(s);
+    const chips = s.grades.length
+      ? s.grades.map((g, i) => `<button class="chip" data-a="rm" data-id="${s.id}" data-i="${i}" title="Ukloni">${g}</button>`).join('')
+      : '<span class="empty">Nema ocjena</span>';
+    const opts = ['<option value="">Auto</option>']
+      .concat([5,4,3,2,1].map(n => `<option value="${n}"${s.final === n ? ' selected' : ''}>${n}</option>`)).join('');
+    return `<div class="card">
+      <div class="top"><div class="name">${esc(s.name)}</div><div class="avg">${m === null ? '–' : fmt(m)}</div></div>
+      <div class="chips">${chips}</div>
+      <div class="pad">${[1,2,3,4,5].map(n => `<button class="n${n}" data-a="add" data-id="${s.id}" data-g="${n}">${n}</button>`).join('')}</div>
+      <div class="foot">
+        <span>Zaključna: <b>${f ?? '–'}</b>
+          <select data-a="final" data-id="${s.id}" aria-label="Zaključna ocjena">${opts}</select></span>
+        <button class="del" data-a="del" data-id="${s.id}">Obriši predmet</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const finals = state.subjects.map(finalOf).filter(x => x !== null);
+  const o = mean(finals);
+  $('#overall').textContent = o === null ? '–' : fmt(o);
+  $('#overallSub').textContent = o === null
+    ? 'Dodaj predmet i ocjene'
+    : `Prosjek zaključnih ocjena · ${finals.length} ${finals.length === 1 ? 'predmet' : 'predmeta'}`;
+}
+
+const find = id => state.subjects.find(s => s.id === id);
+
+$('#addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#newName').value.trim();
+  if (!name) return;
+  state.subjects.push({ id: uid(), name, grades: [], final: null });
+  $('#newName').value = '';
+  save(); render();
+});
+
+$('#list').addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (!b) return;
+  const s = find(b.dataset.id);
+  if (!s) return;
+  const a = b.dataset.a;
+  if (a === 'add') { s.grades.push(+b.dataset.g); s.final = null; }
+  else if (a === 'rm') {
+    if (!confirm('Ukloniti ocjenu ' + s.grades[+b.dataset.i] + '?')) return;
+    s.grades.splice(+b.dataset.i, 1); s.final = null;
+  }
+  else if (a === 'del') {
+    if (!confirm('Obrisati predmet "' + s.name + '"?')) return;
+    state.subjects = state.subjects.filter(x => x !== s);
+  } else return;
+  save(); render();
+});
+
+$('#list').addEventListener('change', e => {
+  const sel = e.target.closest('select[data-a="final"]');
+  if (!sel) return;
+  const s = find(sel.dataset.id);
+  if (!s) return;
+  s.final = sel.value ? +sel.value : null;
+  save(); render();
+});
+
+// Theme: auto -> light -> dark
+function applyTheme(t){
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  else delete document.documentElement.dataset.theme;
+}
+let theme = null;
+try { theme = localStorage.getItem(THEME_KEY); } catch(e){}
+applyTheme(theme);
+$('#theme').addEventListener('click', () => {
+  const cur = document.documentElement.dataset.theme
+    || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY, next); } catch(e){}
+});
+
+// Export / import
+$('#export').addEventListener('click', async () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const file = new File([blob], 'ocjene-backup.json', { type: 'application/json' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Ocjene backup' });
+      return;
+    }
+  } catch(e){ if (e.name === 'AbortError') return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ocjene-backup.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$('#import').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d || !Array.isArray(d.subjects)) throw 0;
+    const clean = d.subjects.map(s => ({
+      id: uid(),
+      name: String(s.name || 'Predmet').slice(0, 40),
+      grades: (Array.isArray(s.grades) ? s.grades : []).map(Number).filter(n => n >= 1 && n <= 5 && Number.isInteger(n)),
+      final: [1,2,3,4,5].includes(s.final) ? s.final : null
+    }));
+    if (!confirm('Zamijeniti trenutne podatke uvezenima (' + clean.length + ' predmeta)?')) return;
+    state = { subjects: clean };
+    save(); render();
+  } catch(err) { alert('Neispravna datoteka.'); }
+});
+
+render();
+
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
