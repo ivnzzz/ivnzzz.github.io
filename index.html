@@ -14,89 +14,215 @@
 <style>
 :root{
   --bg:#f4f5fb; --card:#fff; --text:#1a1b2e; --muted:#6b6f85; --line:#e4e6f2;
-  --accent:#4f46e5; --accent-text:#fff; --chip:#eef0fb; --danger:#dc2626;
-  --g1:#ef4444; --g2:#f97316; --g3:#eab308; --g4:#22c55e; --g5:#10b981;
+  --accent:#4f46e5; --on-accent:#fff; --cell:#eceef9; --danger:#dc2626;
+  --g1:#dc2626; --g2:#ea580c; --g3:#ca8a04; --g4:#16a34a; --g5:#059669;
 }
 :root[data-theme="dark"]{
   --bg:#0f1020; --card:#1a1b30; --text:#eceefb; --muted:#9a9eb8; --line:#2a2c47;
-  --accent:#818cf8; --accent-text:#10112a; --chip:#25274a; --danger:#f87171;
+  --accent:#818cf8; --on-accent:#10112a; --cell:#25274a; --danger:#f87171;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0f1020; --card:#1a1b30; --text:#eceefb; --muted:#9a9eb8; --line:#2a2c47;
-    --accent:#818cf8; --accent-text:#10112a; --chip:#25274a; --danger:#f87171;
+    --accent:#818cf8; --on-accent:#10112a; --cell:#25274a; --danger:#f87171;
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);
   font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-body{padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px)}
-.wrap{max-width:560px;margin:0 auto}
-header{display:flex;justify-content:space-between;align-items:center;padding:16px 0 8px}
-h1{font-size:22px;margin:0}
-.icons button{background:none;border:0;font-size:20px;padding:8px;color:var(--text);cursor:pointer}
-.hero{background:var(--accent);color:var(--accent-text);border-radius:20px;padding:22px;text-align:center;margin:8px 0 16px}
-.hero .big{font-size:56px;font-weight:800;line-height:1}
-.hero .sub{opacity:.85;margin-top:6px;font-size:14px}
-.add{display:flex;gap:8px;margin-bottom:16px}
-input[type=text]{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
-  background:var(--card);color:var(--text);font-size:16px}
-.btn{padding:12px 16px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-text);
-  font-weight:600;font-size:16px;cursor:pointer}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.name{font-weight:700;font-size:17px;overflow-wrap:anywhere}
-.avg{font-weight:800;font-size:20px;white-space:nowrap}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;min-height:30px}
-.chip{background:var(--chip);border:0;border-radius:10px;padding:5px 11px;font-weight:700;font-size:15px;color:var(--text);cursor:pointer}
-.empty{color:var(--muted);font-size:14px;align-self:center}
-.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.pad button{padding:12px 0;border:0;border-radius:12px;font-size:20px;font-weight:800;color:#fff;cursor:pointer}
-.pad button:active{transform:scale(.95)}
-.pad .n1{background:var(--g1)}.pad .n2{background:var(--g2)}.pad .n3{background:var(--g3)}
-.pad .n4{background:var(--g4)}.pad .n5{background:var(--g5)}
-.foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:14px;color:var(--muted);gap:8px}
-select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:14px}
-.del{background:none;border:0;color:var(--danger);font-size:14px;cursor:pointer;padding:6px}
-.hint{color:var(--muted);font-size:13px;text-align:center;margin-top:20px}
-.tools{display:flex;gap:8px;justify-content:center;margin-top:12px}
-.tools button{background:none;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 12px;font-size:14px;cursor:pointer}
+button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer;-webkit-user-select:none;user-select:none}
+body{padding:env(safe-area-inset-top) 16px 0}
+.wrap{max-width:560px;margin:0 auto;padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 0 12px}
+h1{font-size:28px;margin:0;letter-spacing:-.5px}
+.iconbtn{background:none;border:0;padding:8px;border-radius:10px;font-size:20px;line-height:1}
+
+.c1{background:var(--g1);color:#fff}.c2{background:var(--g2);color:#fff}.c3{background:var(--g3);color:#fff}
+.c4{background:var(--g4);color:#fff}.c5{background:var(--g5);color:#fff}
+
+/* subject list */
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.nm{flex:1;min-width:0}
+.t{display:block;font-weight:650;overflow-wrap:anywhere}
+.s{display:block;color:var(--muted);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;letter-spacing:1px}
+.right{text-align:center}
+.pill{display:inline-block;min-width:60px;text-align:center;padding:6px 10px;border-radius:12px;font-weight:800;font-size:18px}
+.pill.none{background:var(--cell);color:var(--muted)}
+.fin{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.empty{text-align:center;color:var(--muted);padding:48px 0}
+.foot{display:flex;justify-content:center;gap:10px;align-items:center;color:var(--muted);margin-top:16px;font-size:14px}
+.foot button{background:none;border:0;color:var(--muted);text-decoration:underline;padding:6px}
+
+/* bottom bar */
+.bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--bg) 65%,transparent)}
+.bar{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.sum{flex:1;background:var(--accent);color:var(--on-accent);border-radius:18px;padding:12px 18px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.lab{font-weight:700;font-size:14px;letter-spacing:.5px;text-transform:uppercase}
+.num{font-weight:800;font-size:26px}
+.fab{width:56px;height:56px;border-radius:18px;background:var(--card);border:1px solid var(--line);
+  font-size:30px;line-height:1;color:var(--accent)}
+
+/* overlays */
+.overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,10,25,.55);display:flex;
+  align-items:flex-end;justify-content:center;z-index:10;opacity:0;pointer-events:none;transition:opacity .18s}
+.overlay.open{opacity:1;pointer-events:auto}
+.overlay.top{z-index:20;align-items:center}
+.panel{width:100%;max-width:520px;background:var(--card);border-radius:24px 24px 0 0;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:96vh;max-height:96dvh;
+  overflow:auto;overscroll-behavior:contain;transform:translateY(24px);transition:transform .2s}
+.overlay.open .panel{transform:none}
+@media(min-width:600px){.overlay{align-items:center}.panel{border-radius:24px}}
+.ph{display:flex;align-items:center;gap:4px}
+.ph h2{flex:1;margin:0;font-size:21px;overflow-wrap:anywhere}
+.meta{display:flex;align-items:center;gap:10px;margin-top:6px}
+#shFin{font-size:14px}
+.hint{color:var(--muted);font-size:13px;margin:12px 0 0}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0 14px}
+.cell{height:46px;border-radius:10px;border:0;background:var(--cell);font-size:20px;font-weight:800;padding:0}
+.cell.sel{outline:2px solid var(--accent);outline-offset:1px}
+.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.keys button{padding:14px 0;border:0;border-radius:14px;font-size:22px;font-weight:800}
+.keys button:active{transform:scale(.95)}
+.clear{width:100%;margin-top:10px;padding:12px;border-radius:14px;border:1px solid var(--line);
+  background:none;font-weight:600;color:var(--danger)}
+.finlab{margin:16px 0 6px;color:var(--muted);font-size:14px}
+.chips{display:flex;gap:6px}
+.chip{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--line);background:none;font-weight:700}
+.chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.act{display:flex;gap:10px;margin-top:18px}
+.act button{flex:1;padding:14px;border-radius:14px;font-weight:700;border:0}
+.act .cancel{background:var(--cell)}
+.act .save{background:var(--accent);color:var(--on-accent)}
+
+.modal{width:calc(100% - 32px);max-width:380px;background:var(--card);border-radius:20px;padding:18px}
+.modal h3{margin:0 0 12px;font-size:18px}
+input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--bg);color:var(--text);font-size:16px}
+.modal .act{margin-top:14px}
+
+/* install gate */
+#gate{display:none;text-align:center;max-width:380px;margin:0 auto;padding:56px 8px}
+body.gated #gate{display:block}
+body.gated .wrap,body.gated .bottom{display:none}
+#gate img{border-radius:18px}
+#gate h2{font-size:24px;margin:16px 0 6px}
+#gate p{color:var(--muted);margin:0 0 20px}
+#gate ol{text-align:left;padding-left:22px;line-height:1.8}
+.primary{background:var(--accent);color:var(--on-accent);border:0;border-radius:14px;padding:14px 22px;font-weight:700;margin-top:12px}
 </style>
 </head>
 <body>
+
+<div id="gate">
+  <img src="icon-192.png" width="72" height="72" alt="">
+  <h2>Dodaj na početni zaslon</h2>
+  <p id="gateMsg">Ova aplikacija radi samo kad je instalirana.</p>
+  <ol id="steps"></ol>
+  <button class="primary" id="installBtn" hidden>Instaliraj</button>
+</div>
+
 <div class="wrap">
   <header>
     <h1>Ocjene</h1>
-    <div class="icons"><button id="theme" title="Tema" aria-label="Promijeni temu">🌓</button></div>
+    <button class="iconbtn" id="theme" aria-label="Promijeni temu">🌓</button>
   </header>
-
-  <div class="hero">
-    <div class="big" id="overall">–</div>
-    <div class="sub" id="overallSub">Dodaj predmet i ocjene</div>
-  </div>
-
-  <form class="add" id="addForm">
-    <input type="text" id="newName" placeholder="Novi predmet (npr. Matematika)" maxlength="40" autocomplete="off">
-    <button class="btn" type="submit">Dodaj</button>
-  </form>
-
   <div id="list"></div>
-
-  <div class="tools">
-    <button id="export">Izvezi podatke</button>
-    <button id="import">Uvezi podatke</button>
+  <div class="foot">
+    <button id="export">Izvezi kopiju</button><span>·</span><button id="import">Uvezi kopiju</button>
     <input type="file" id="file" accept="application/json,.json" hidden>
   </div>
-  <p class="hint">Podaci se spremaju samo na ovom uređaju. Povremeno izvezi sigurnosnu kopiju.<br>Zaključna ocjena = zaokruženi prosjek predmeta; možeš je promijeniti.</p>
+</div>
+
+<div class="bottom">
+  <div class="bar">
+    <div class="sum"><span class="lab" id="lab">Prosjek</span><span class="num" id="num">–</span></div>
+    <button class="fab" id="add" aria-label="Dodaj predmet">+</button>
+  </div>
+</div>
+
+<!-- subject sheet -->
+<div class="overlay" id="sheet">
+  <div class="panel" role="dialog" aria-modal="true">
+    <div class="ph">
+      <h2 id="shTitle"></h2>
+      <button class="iconbtn" id="shRename" aria-label="Preimenuj predmet">✎</button>
+      <button class="iconbtn" id="shDelete" aria-label="Obriši predmet">🗑</button>
+    </div>
+    <div class="meta"><span class="pill none" id="shPill">–</span><span class="fin" id="shFin"></span></div>
+    <p class="hint">Dodirni ocjenu u tablici za izmjenu.</p>
+    <div class="grid" id="grid"></div>
+    <div class="keys" id="keys">
+      <button class="c1" data-n="1">1</button><button class="c2" data-n="2">2</button>
+      <button class="c3" data-n="3">3</button><button class="c4" data-n="4">4</button>
+      <button class="c5" data-n="5">5</button>
+    </div>
+    <button class="clear" id="shClear">Obriši</button>
+    <div class="finlab">Zaključna ocjena</div>
+    <div class="chips" id="finRow"></div>
+    <div class="act">
+      <button class="cancel" id="shCancel">Otkaži</button>
+      <button class="save" id="shSave">Sačuvaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- name modal -->
+<div class="overlay top" id="nameModal">
+  <form class="modal" id="nameForm" autocomplete="off">
+    <h3 id="nameTitle">Predmet</h3>
+    <input type="text" id="nameInput" maxlength="40" placeholder="npr. Matematika">
+    <div class="act">
+      <button type="button" class="cancel" id="nameCancel">Odustani</button>
+      <button type="submit" class="save">Spremi</button>
+    </div>
+  </form>
 </div>
 
 <script>
-const KEY = 'ocjene-v1', THEME_KEY = 'ocjene-theme';
+const KEY = 'ocjene-v1', THEME_KEY = 'ocjene-theme', COLS = 6;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => n.toFixed(2).replace('.', ',');
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+/* ---------- install gate ---------- */
+const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const bypass = /[?&]dev\b/.test(location.search) || ['localhost', '127.0.0.1'].includes(location.hostname);
+if (!standalone && !bypass) {
+  document.body.classList.add('gated');
+  const ua = navigator.userAgent;
+  const ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const android = /android/i.test(ua);
+  const steps = ios ? [
+    'Otvori ovu stranicu u Safariju.',
+    'Dodirni gumb <b>Podijeli</b> (kvadrat sa strelicom).',
+    'Odaberi <b>Dodaj na početni zaslon</b>.',
+    'Otvori aplikaciju s početnog zaslona.'
+  ] : android ? [
+    'Dodirni izbornik <b>⋮</b> u pregledniku.',
+    'Odaberi <b>Instaliraj aplikaciju</b> ili <b>Dodaj na početni zaslon</b>.',
+    'Otvori aplikaciju s početnog zaslona.'
+  ] : ['Otvori ovu stranicu na mobitelu.', 'Dodaj je na početni zaslon.'];
+  $('#steps').innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+}
+let deferred = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; $('#installBtn').hidden = false; });
+$('#installBtn').addEventListener('click', async () => {
+  if (!deferred) return;
+  deferred.prompt();
+  try { await deferred.userChoice; } catch(e){}
+  deferred = null; $('#installBtn').hidden = true;
+});
+addEventListener('appinstalled', () => {
+  $('#gateMsg').textContent = 'Instalirano! Otvori aplikaciju s početnog zaslona.';
+  $('#steps').innerHTML = ''; $('#installBtn').hidden = true;
+});
+
+/* ---------- data ---------- */
 let state = load();
 function load(){
   try {
@@ -106,83 +232,165 @@ function load(){
   return { subjects: [] };
 }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+const find = id => state.subjects.find(s => s.id === id);
 
 const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
-// Empty subjects are skipped, never counted as zero.
-const finalOf = s => {
-  if (s.final) return s.final;
-  const m = mean(s.grades);
-  return m === null ? null : Math.min(5, Math.max(1, Math.round(m + 1e-9)));
-};
+const clamp5 = m => Math.min(5, Math.max(1, Math.round(m + 1e-9)));
+const finalOf = s => s.final || (s.grades.length ? clamp5(mean(s.grades)) : null); // empty subjects are skipped, never 0
+const gc = x => 'c' + clamp5(x);
+function label(o, finals){
+  if (finals.includes(1)) return 'Nedovoljan';
+  const r = Math.round(o * 100 + 1e-9) / 100;
+  return r >= 4.5 ? 'Odličan' : r >= 3.5 ? 'Vrlo dobar' : r >= 2.5 ? 'Dobar' : 'Dovoljan';
+}
 
+/* ---------- list ---------- */
 function render(){
   const list = $('#list');
-  list.innerHTML = state.subjects.map(s => {
+  list.innerHTML = state.subjects.length ? state.subjects.map(s => {
     const m = mean(s.grades), f = finalOf(s);
-    const chips = s.grades.length
-      ? s.grades.map((g, i) => `<button class="chip" data-a="rm" data-id="${s.id}" data-i="${i}" title="Ukloni">${g}</button>`).join('')
-      : '<span class="empty">Nema ocjena</span>';
-    const opts = ['<option value="">Auto</option>']
-      .concat([5,4,3,2,1].map(n => `<option value="${n}"${s.final === n ? ' selected' : ''}>${n}</option>`)).join('');
-    return `<div class="card">
-      <div class="top"><div class="name">${esc(s.name)}</div><div class="avg">${m === null ? '–' : fmt(m)}</div></div>
-      <div class="chips">${chips}</div>
-      <div class="pad">${[1,2,3,4,5].map(n => `<button class="n${n}" data-a="add" data-id="${s.id}" data-g="${n}">${n}</button>`).join('')}</div>
-      <div class="foot">
-        <span>Zaključna: <b>${f ?? '–'}</b>
-          <select data-a="final" data-id="${s.id}" aria-label="Zaključna ocjena">${opts}</select></span>
-        <button class="del" data-a="del" data-id="${s.id}">Obriši predmet</button>
-      </div>
-    </div>`;
-  }).join('');
+    return `<button class="row" data-id="${s.id}">
+      <span class="nm"><span class="t">${esc(s.name)}</span>${s.grades.length ? `<span class="s">${s.grades.join(' ')}</span>` : ''}</span>
+      <span class="right"><span class="pill ${m === null ? 'none' : gc(m)}">${m === null ? '–' : fmt(m)}</span>${f !== null ? `<span class="fin">zaklj. ${f}</span>` : ''}</span>
+    </button>`;
+  }).join('') : '<p class="empty">Još nema predmeta.<br>Dodaj prvi gumbom +</p>';
 
   const finals = state.subjects.map(finalOf).filter(x => x !== null);
   const o = mean(finals);
-  $('#overall').textContent = o === null ? '–' : fmt(o);
-  $('#overallSub').textContent = o === null
-    ? 'Dodaj predmet i ocjene'
-    : `Prosjek zaključnih ocjena · ${finals.length} ${finals.length === 1 ? 'predmet' : 'predmeta'}`;
+  $('#lab').textContent = o === null ? 'Prosjek' : label(o, finals);
+  $('#num').textContent = o === null ? '–' : fmt(o);
 }
 
-const find = id => state.subjects.find(s => s.id === id);
-
-$('#addForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const name = $('#newName').value.trim();
-  if (!name) return;
-  state.subjects.push({ id: uid(), name, grades: [], final: null });
-  $('#newName').value = '';
-  save(); render();
-});
-
 $('#list').addEventListener('click', e => {
-  const b = e.target.closest('[data-a]');
-  if (!b) return;
-  const s = find(b.dataset.id);
+  const b = e.target.closest('.row');
+  if (b) openSheet(b.dataset.id);
+});
+
+/* ---------- subject sheet ---------- */
+let draft = null, sel = 0, sheetOpen = false, ignorePop = false, nameCb = null;
+const snap = d => JSON.stringify([d.name, d.grades, d.final]);
+
+function openSheet(id){
+  const s = find(id);
   if (!s) return;
-  const a = b.dataset.a;
-  if (a === 'add') { s.grades.push(+b.dataset.g); s.final = null; }
-  else if (a === 'rm') {
-    if (!confirm('Ukloniti ocjenu ' + s.grades[+b.dataset.i] + '?')) return;
-    s.grades.splice(+b.dataset.i, 1); s.final = null;
+  draft = { id: s.id, name: s.name, grades: s.grades.slice(), final: s.final || null };
+  draft.orig = snap(draft);
+  sel = draft.grades.length;
+  renderSheet();
+  $('#sheet').classList.add('open');
+  sheetOpen = true;
+  history.pushState({ sheet: 1 }, '');
+}
+function hideSheet(){ sheetOpen = false; draft = null; $('#sheet').classList.remove('open'); }
+function closeSheet(){
+  if (!sheetOpen) return;
+  hideSheet();
+  if (history.state && history.state.sheet) { ignorePop = true; history.back(); }
+}
+// Android back button / iOS swipe closes the sheet instead of leaving the app
+addEventListener('popstate', () => {
+  if (ignorePop) { ignorePop = false; return; }
+  closeName();
+  if (sheetOpen) hideSheet();
+});
+
+function renderSheet(){
+  const g = draft.grades, m = mean(g);
+  const f = draft.final || (g.length ? clamp5(m) : null);
+  $('#shTitle').textContent = draft.name;
+  const p = $('#shPill');
+  p.className = 'pill ' + (m === null ? 'none' : gc(m));
+  p.textContent = m === null ? '–' : fmt(m);
+  $('#shFin').textContent = f !== null ? 'zaključna ' + f : '';
+
+  const rows = Math.max(5, Math.ceil((g.length + 1) / COLS));
+  let h = '';
+  for (let i = 0; i < rows * COLS; i++) {
+    const v = g[i];
+    h += `<button class="cell${v ? ' c' + v : ''}${i === sel ? ' sel' : ''}" data-i="${i}">${v || ''}</button>`;
   }
-  else if (a === 'del') {
-    if (!confirm('Obrisati predmet "' + s.name + '"?')) return;
-    state.subjects = state.subjects.filter(x => x !== s);
-  } else return;
-  save(); render();
+  $('#grid').innerHTML = h;
+
+  $('#finRow').innerHTML = [['', 'Auto'], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]]
+    .map(([v, t]) => `<button class="chip${(draft.final || '') === v ? ' on' : ''}" data-f="${v}">${t}</button>`).join('');
+}
+
+function press(n){
+  if (sel < draft.grades.length) draft.grades[sel] = n; else draft.grades.push(n);
+  sel = draft.grades.length;
+  renderSheet();
+}
+function clearGrade(){
+  if (sel < draft.grades.length) draft.grades.splice(sel, 1);
+  else if (draft.grades.length) draft.grades.pop();
+  sel = draft.grades.length;
+  renderSheet();
+}
+
+$('#grid').addEventListener('click', e => {
+  const b = e.target.closest('.cell');
+  if (!b || !draft) return;
+  sel = Math.min(+b.dataset.i, draft.grades.length);
+  renderSheet();
+});
+$('#keys').addEventListener('click', e => {
+  const b = e.target.closest('[data-n]');
+  if (b && draft) press(+b.dataset.n);
+});
+$('#shClear').addEventListener('click', () => { if (draft) clearGrade(); });
+$('#finRow').addEventListener('click', e => {
+  const b = e.target.closest('[data-f]');
+  if (!b || !draft) return;
+  draft.final = b.dataset.f === '' ? null : +b.dataset.f;
+  renderSheet();
+});
+$('#shSave').addEventListener('click', () => {
+  if (!draft) return;
+  const s = find(draft.id);
+  if (s) { s.name = draft.name; s.grades = draft.grades; s.final = draft.final; }
+  save(); render(); closeSheet();
+});
+$('#shCancel').addEventListener('click', closeSheet);
+$('#sheet').addEventListener('click', e => {
+  if (e.target.id === 'sheet' && draft && snap(draft) === draft.orig) closeSheet();
+});
+$('#shRename').addEventListener('click', () => {
+  if (!draft) return;
+  openName('Preimenuj predmet', draft.name, v => { draft.name = v; renderSheet(); });
+});
+$('#shDelete').addEventListener('click', () => {
+  if (!draft || !confirm('Obrisati predmet "' + draft.name + '"?')) return;
+  state.subjects = state.subjects.filter(x => x.id !== draft.id);
+  save(); render(); closeSheet();
 });
 
-$('#list').addEventListener('change', e => {
-  const sel = e.target.closest('select[data-a="final"]');
-  if (!sel) return;
-  const s = find(sel.dataset.id);
-  if (!s) return;
-  s.final = sel.value ? +sel.value : null;
-  save(); render();
+/* ---------- name modal ---------- */
+function openName(title, val, cb){
+  $('#nameTitle').textContent = title;
+  const i = $('#nameInput');
+  i.value = val; nameCb = cb;
+  $('#nameModal').classList.add('open');
+  setTimeout(() => { i.focus(); i.select(); }, 60);
+}
+function closeName(){ nameCb = null; $('#nameModal').classList.remove('open'); }
+$('#nameForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('#nameInput').value.trim().slice(0, 40);
+  if (!v) return;
+  const cb = nameCb;
+  closeName();
+  if (cb) cb(v);
+});
+$('#nameCancel').addEventListener('click', closeName);
+$('#add').addEventListener('click', () => {
+  openName('Novi predmet', '', v => {
+    const s = { id: uid(), name: v, grades: [], final: null };
+    state.subjects.push(s);
+    save(); render(); openSheet(s.id);
+  });
 });
 
-// Theme: auto -> light -> dark
+/* ---------- theme ---------- */
 function applyTheme(t){
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
   else delete document.documentElement.dataset.theme;
@@ -198,7 +406,7 @@ $('#theme').addEventListener('click', () => {
   try { localStorage.setItem(THEME_KEY, next); } catch(e){}
 });
 
-// Export / import
+/* ---------- export / import ---------- */
 $('#export').addEventListener('click', async () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const file = new File([blob], 'ocjene-backup.json', { type: 'application/json' });
@@ -225,7 +433,7 @@ $('#file').addEventListener('change', async e => {
     const clean = d.subjects.map(s => ({
       id: uid(),
       name: String(s.name || 'Predmet').slice(0, 40),
-      grades: (Array.isArray(s.grades) ? s.grades : []).map(Number).filter(n => n >= 1 && n <= 5 && Number.isInteger(n)),
+      grades: (Array.isArray(s.grades) ? s.grades : []).map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 5),
       final: [1,2,3,4,5].includes(s.final) ? s.final : null
     }));
     if (!confirm('Zamijeniti trenutne podatke uvezenima (' + clean.length + ' predmeta)?')) return;
