@@ -54,6 +54,9 @@ h1{font-size:28px;margin:0;letter-spacing:-.5px}
 .pill.none{background:var(--cell);color:var(--muted)}
 .fin{display:block;font-size:12px;color:var(--muted);margin-top:3px}
 .empty{text-align:center;color:var(--muted);padding:48px 0}
+.row.bad{border-color:var(--danger)}
+.nm .risk{display:block}
+.risk{color:var(--danger);font-size:13px;font-weight:600;margin-top:4px}
 .foot{display:flex;justify-content:center;gap:10px;align-items:center;color:var(--muted);margin-top:16px;font-size:14px}
 .foot button{background:none;border:0;color:var(--muted);text-decoration:underline;padding:6px}
 
@@ -175,6 +178,7 @@ body.gated .wrap,body.gated .bottom{display:none}
       <button class="iconbtn" id="shDelete" aria-label="Obriši predmet">🗑</button>
     </div>
     <div class="meta"><span class="pill none" id="shPill">–</span><span class="fin" id="shFin"></span></div>
+    <div class="risk" id="shRisk" hidden></div>
     <p class="hint">Dodirni ocjenu za izmjenu ili bilješku.</p>
     <div class="grid" id="grid"></div>
     <input type="text" class="note-in" id="noteInput" maxlength="60" autocomplete="off" disabled placeholder="Dodirni ocjenu u tablici za bilješku">
@@ -317,6 +321,19 @@ const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 const clamp5 = m => Math.min(5, Math.max(1, Math.round(m + 1e-9)));
 const finalOf = s => s.final || (s.grades.length ? clamp5(mean(s.grades)) : null); // empty subjects are skipped, never 0
 const gc = x => 'c' + clamp5(x);
+
+// A subject is failed when its final grade is 1, i.e. the mean is below 1,50 (1,50 itself rounds up to 2).
+const isFailMean = m => Math.round(m + 1e-9) <= 1;
+function riskOf(grades, fin){
+  if (fin) return fin === 1 ? { type: 'fail' } : null;        // manual final grade: no prediction
+  if (!grades.length) return null;
+  if (isFailMean(mean(grades))) return { type: 'fail' };
+  for (let g = 4; g >= 1; g--) if (isFailMean(mean(grades.concat(g)))) return { type: 'risk', g };
+  return null;
+}
+const riskText = r => !r ? '' : r.type === 'fail'
+  ? 'Padaš predmet (zaključna 1)'
+  : 'Ako sljedeća ocjena bude ' + (r.g === 1 ? '1' : r.g + ' ili manje') + ', padaš predmet';
 function label(o, finals){
   if (finals.includes(1)) return 'Nedovoljan';
   const r = Math.round(o * 100 + 1e-9) / 100;
@@ -344,8 +361,9 @@ function render(){
   const list = $('#list');
   list.innerHTML = state.subjects.length ? ordered().map(s => {
     const m = mean(s.grades), f = finalOf(s);
-    return `<button class="row" data-id="${s.id}">
-      <span class="nm"><span class="t">${esc(s.name)}</span>${s.grades.length ? `<span class="s">${s.grades.join(' ')}</span>` : ''}</span>
+    const rt = riskText(riskOf(s.grades, s.final));
+    return `<button class="row${f !== null && f <= 2 ? ' bad' : ''}" data-id="${s.id}">
+      <span class="nm"><span class="t">${esc(s.name)}</span>${s.grades.length ? `<span class="s">${s.grades.join(' ')}</span>` : ''}${rt ? `<span class="risk">⚠ ${rt}</span>` : ''}</span>
       <span class="right"><span class="pill ${m === null ? 'none' : gc(m)}">${m === null ? '–' : fmt(m)}</span>${f !== null ? `<span class="fin">zaklj. ${f}</span>` : ''}</span>
     </button>`;
   }).join('') : '<p class="empty">Još nema predmeta.<br>Dodaj prvi gumbom +</p>';
@@ -400,6 +418,9 @@ function renderSheet(){
   p.className = 'pill ' + (m === null ? 'none' : gc(m));
   p.textContent = m === null ? '–' : fmt(m);
   $('#shFin').textContent = f !== null ? 'zaključna ' + f : '';
+  const rk = riskOf(g, draft.final);
+  $('#shRisk').textContent = rk ? '⚠ ' + riskText(rk) : '';
+  $('#shRisk').hidden = !rk;
 
   const rows = Math.max(5, Math.ceil((g.length + 1) / COLS));
   let h = '';
