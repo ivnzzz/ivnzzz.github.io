@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ocjene">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#4f46e5">
+<meta name="theme-color" content="#0f1020">
 <style>
 :root{
   --bg:#f4f5fb; --card:#fff; --text:#1a1b2e; --muted:#6b6f85; --line:#e4e6f2;
@@ -113,8 +113,8 @@ input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px soli
 .sw{width:40px;height:40px;border-radius:50%;border:0;padding:0}
 .sw.on{outline:3px solid var(--text);outline-offset:2px}
 .setlab + .clear{margin-top:0}
-.chips.wrap{flex-wrap:wrap}
-.chips.wrap .chip{flex:1 1 calc(50% - 6px)}
+.chips.two{flex-wrap:wrap}
+.chips.two .chip{flex:1 1 calc(50% - 6px)}
 input:disabled{opacity:.5}
 .note-in{margin:0 0 12px}
 .cell{position:relative}
@@ -216,7 +216,7 @@ body.gated .wrap,body.gated .bottom{display:none}
     <div class="setlab">Boja</div>
     <div class="swatches" id="accentRow"></div>
     <div class="setlab">Redoslijed predmeta</div>
-    <div class="chips wrap" id="sortRow">
+    <div class="chips two" id="sortRow">
       <button class="chip" data-sort="added">Kako sam dodao</button>
       <button class="chip" data-sort="az">Abecedno</button>
       <button class="chip" data-sort="avg-desc">Najbolji prvi</button>
@@ -514,8 +514,9 @@ function applyLook(){
   const dark = isDark(), c = ACCENTS[accent][dark ? 1 : 0];
   root.style.setProperty('--accent', c);
   root.style.setProperty('--on-accent', dark ? '#10112a' : '#fff');
+  // status bar blends into the page: same colour as the app background, not the accent
   const m = document.querySelector('meta[name="theme-color"]');
-  if (m) m.setAttribute('content', c);
+  if (m) m.setAttribute('content', dark ? '#0f1020' : '#f4f5fb');
 }
 function renderSettings(){
   document.querySelectorAll('#modeRow .chip').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
