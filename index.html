@@ -59,10 +59,11 @@ h1{font-size:28px;margin:0;letter-spacing:-.5px}
 .bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
   background:linear-gradient(to top,var(--bg) 65%,transparent)}
 .bar{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.sum{flex:1;background:var(--accent);color:var(--on-accent);border-radius:18px;padding:12px 18px;
-  display:flex;justify-content:space-between;align-items:baseline}
+.sum{flex:1;background:var(--accent);color:var(--on-accent);border-radius:18px;padding:12px 18px;border:0;font:inherit;
+  display:flex;justify-content:flex-start;align-items:baseline;text-align:left}
+.sum::before{content:"🎯";margin-right:10px}
 .lab{font-weight:700;font-size:14px;letter-spacing:.5px;text-transform:uppercase}
-.num{font-weight:800;font-size:26px}
+.num{font-weight:800;font-size:26px;margin-left:auto}
 .fab{width:56px;height:56px;border-radius:18px;background:var(--card);border:1px solid var(--line);
   font-size:30px;line-height:1;color:var(--accent)}
 
@@ -83,6 +84,8 @@ h1{font-size:28px;margin:0;letter-spacing:-.5px}
 .hint{color:var(--muted);font-size:13px;margin:12px 0 0}
 .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0 14px}
 .cell{height:46px;border-radius:10px;border:0;background:var(--cell);font-size:20px;font-weight:800;padding:0}
+.cell.c1{background:var(--g1)}.cell.c2{background:var(--g2)}.cell.c3{background:var(--g3)}
+.cell.c4{background:var(--g4)}.cell.c5{background:var(--g5)}
 .cell.sel{outline:2px solid var(--accent);outline-offset:1px}
 .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .keys button{padding:14px 0;border:0;border-radius:14px;font-size:22px;font-weight:800}
@@ -110,6 +113,20 @@ input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px soli
 .sw{width:40px;height:40px;border-radius:50%;border:0;padding:0}
 .sw.on{outline:3px solid var(--text);outline-offset:2px}
 .setlab + .clear{margin-top:0}
+.chips.wrap{flex-wrap:wrap}
+.chips.wrap .chip{flex:1 1 calc(50% - 6px)}
+input:disabled{opacity:.5}
+.note-in{margin:0 0 12px}
+.cell{position:relative}
+.cell.note::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.95)}
+
+/* goal */
+#goalNow{color:var(--muted);font-size:14px;margin-top:4px}
+.ok{background:var(--cell);border-radius:14px;padding:14px;margin-top:14px;font-weight:600}
+.gcard{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px}
+.gh{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.gl{color:var(--muted);font-size:14px;margin-top:4px;overflow-wrap:anywhere}
+.warn{color:var(--muted);font-size:13px;margin-top:12px}
 
 /* install gate */
 #gate{display:none;text-align:center;max-width:380px;margin:0 auto;padding:56px 8px}
@@ -142,7 +159,7 @@ body.gated .wrap,body.gated .bottom{display:none}
 
 <div class="bottom">
   <div class="bar">
-    <div class="sum"><span class="lab" id="lab">Prosjek</span><span class="num" id="num">–</span></div>
+    <button class="sum" id="goalBtn" aria-label="Cilj prosjeka"><span class="lab" id="lab">Prosjek</span><span class="num" id="num">–</span></button>
     <button class="fab" id="add" aria-label="Dodaj predmet">+</button>
   </div>
 </div>
@@ -156,8 +173,9 @@ body.gated .wrap,body.gated .bottom{display:none}
       <button class="iconbtn" id="shDelete" aria-label="Obriši predmet">🗑</button>
     </div>
     <div class="meta"><span class="pill none" id="shPill">–</span><span class="fin" id="shFin"></span></div>
-    <p class="hint">Dodirni ocjenu u tablici za izmjenu.</p>
+    <p class="hint">Dodirni ocjenu za izmjenu ili bilješku.</p>
     <div class="grid" id="grid"></div>
+    <input type="text" class="note-in" id="noteInput" maxlength="60" autocomplete="off" disabled placeholder="Dodirni ocjenu u tablici za bilješku">
     <div class="keys" id="keys">
       <button class="c1" data-n="1">1</button><button class="c2" data-n="2">2</button>
       <button class="c3" data-n="3">3</button><button class="c4" data-n="4">4</button>
@@ -173,6 +191,18 @@ body.gated .wrap,body.gated .bottom{display:none}
   </div>
 </div>
 
+<!-- goal -->
+<div class="overlay" id="goal">
+  <div class="panel" role="dialog" aria-modal="true">
+    <div class="ph"><h2>Cilj</h2></div>
+    <div id="goalNow"></div>
+    <div class="setlab">Želim prosjek</div>
+    <div class="chips" id="goalRow"></div>
+    <div id="goalOut"></div>
+    <div class="act"><button class="save" id="goalDone">Gotovo</button></div>
+  </div>
+</div>
+
 <!-- settings -->
 <div class="overlay" id="settings">
   <div class="panel" role="dialog" aria-modal="true">
@@ -185,6 +215,13 @@ body.gated .wrap,body.gated .bottom{display:none}
     </div>
     <div class="setlab">Boja</div>
     <div class="swatches" id="accentRow"></div>
+    <div class="setlab">Redoslijed predmeta</div>
+    <div class="chips wrap" id="sortRow">
+      <button class="chip" data-sort="added">Kako sam dodao</button>
+      <button class="chip" data-sort="az">Abecedno</button>
+      <button class="chip" data-sort="avg-desc">Najbolji prvi</button>
+      <button class="chip" data-sort="avg-asc">Najlošiji prvi</button>
+    </div>
     <div class="setlab">Podaci</div>
     <div class="chips">
       <button class="chip" id="export">Izvezi kopiju</button>
@@ -254,7 +291,16 @@ let state = load();
 function load(){
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && Array.isArray(s.subjects)) return s;
+    if (s && Array.isArray(s.subjects)) {
+      // older saves have no notes: keep notes[] aligned with grades[]
+      s.subjects.forEach(x => {
+        if (!Array.isArray(x.grades)) x.grades = [];
+        x.notes = (Array.isArray(x.notes) ? x.notes : []).map(n => typeof n === 'string' ? n : '');
+        while (x.notes.length < x.grades.length) x.notes.push('');
+        x.notes.length = x.grades.length;
+      });
+      return s;
+    }
   } catch(e){}
   return { subjects: [] };
 }
@@ -272,9 +318,25 @@ function label(o, finals){
 }
 
 /* ---------- list ---------- */
+function ordered(){
+  const arr = state.subjects.slice();
+  const byName = (a, b) => a.name.localeCompare(b.name, 'hr');
+  if (sortMode === 'az') arr.sort(byName);
+  else if (sortMode === 'avg-desc' || sortMode === 'avg-asc') {
+    const dir = sortMode === 'avg-desc' ? -1 : 1;
+    arr.sort((a, b) => {
+      const x = mean(a.grades), y = mean(b.grades);
+      if (x === null && y === null) return byName(a, b);
+      if (x === null) return 1;   // empty subjects always last
+      if (y === null) return -1;
+      return dir * (x - y) || byName(a, b);
+    });
+  }
+  return arr;
+}
 function render(){
   const list = $('#list');
-  list.innerHTML = state.subjects.length ? state.subjects.map(s => {
+  list.innerHTML = state.subjects.length ? ordered().map(s => {
     const m = mean(s.grades), f = finalOf(s);
     return `<button class="row" data-id="${s.id}">
       <span class="nm"><span class="t">${esc(s.name)}</span>${s.grades.length ? `<span class="s">${s.grades.join(' ')}</span>` : ''}</span>
@@ -296,12 +358,12 @@ $('#list').addEventListener('click', e => {
 
 /* ---------- subject sheet ---------- */
 let draft = null, sel = 0, sheetOpen = false, ignorePop = false, nameCb = null;
-const snap = d => JSON.stringify([d.name, d.grades, d.final]);
+const snap = d => JSON.stringify([d.name, d.grades, d.notes, d.final]);
 
 function openSheet(id){
   const s = find(id);
   if (!s) return;
-  draft = { id: s.id, name: s.name, grades: s.grades.slice(), final: s.final || null };
+  draft = { id: s.id, name: s.name, grades: s.grades.slice(), notes: (s.notes || []).slice(), final: s.final || null };
   draft.orig = snap(draft);
   sel = draft.grades.length;
   renderSheet();
@@ -321,6 +383,7 @@ addEventListener('popstate', () => {
   closeName();
   if (sheetOpen) hideSheet();
   if (settingsOpen) hideSettings();
+  if (goalOpen) hideGoal();
 });
 
 function renderSheet(){
@@ -336,22 +399,27 @@ function renderSheet(){
   let h = '';
   for (let i = 0; i < rows * COLS; i++) {
     const v = g[i];
-    h += `<button class="cell${v ? ' c' + v : ''}${i === sel ? ' sel' : ''}" data-i="${i}">${v || ''}</button>`;
+    h += `<button class="cell${v ? ' c' + v : ''}${v && draft.notes[i] ? ' note' : ''}${i === sel ? ' sel' : ''}" data-i="${i}">${v || ''}</button>`;
   }
   $('#grid').innerHTML = h;
+  const ni = $('#noteInput'), has = sel < g.length;
+  ni.disabled = !has;
+  ni.value = has ? (draft.notes[sel] || '') : '';
+  ni.placeholder = has ? 'Bilješka za ocjenu ' + g[sel] + ' (npr. kontrolna iz…)' : 'Dodirni ocjenu u tablici za bilješku';
 
   $('#finRow').innerHTML = [['', 'Auto'], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]]
     .map(([v, t]) => `<button class="chip${(draft.final || '') === v ? ' on' : ''}" data-f="${v}">${t}</button>`).join('');
 }
 
 function press(n){
-  if (sel < draft.grades.length) draft.grades[sel] = n; else draft.grades.push(n);
+  if (sel < draft.grades.length) draft.grades[sel] = n;          // correcting a grade keeps its note
+  else { draft.grades.push(n); draft.notes.push(''); }
   sel = draft.grades.length;
   renderSheet();
 }
 function clearGrade(){
-  if (sel < draft.grades.length) draft.grades.splice(sel, 1);
-  else if (draft.grades.length) draft.grades.pop();
+  if (sel < draft.grades.length) { draft.grades.splice(sel, 1); draft.notes.splice(sel, 1); }
+  else if (draft.grades.length) { draft.grades.pop(); draft.notes.pop(); }
   sel = draft.grades.length;
   renderSheet();
 }
@@ -367,6 +435,13 @@ $('#keys').addEventListener('click', e => {
   if (b && draft) press(+b.dataset.n);
 });
 $('#shClear').addEventListener('click', () => { if (draft) clearGrade(); });
+$('#noteInput').addEventListener('input', e => {
+  if (!draft || sel >= draft.grades.length) return;
+  draft.notes[sel] = e.target.value.slice(0, 60);
+  const c = $('#grid .cell[data-i="' + sel + '"]');
+  if (c) c.classList.toggle('note', !!e.target.value.trim());
+});
+$('#noteInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 $('#finRow').addEventListener('click', e => {
   const b = e.target.closest('[data-f]');
   if (!b || !draft) return;
@@ -376,7 +451,7 @@ $('#finRow').addEventListener('click', e => {
 $('#shSave').addEventListener('click', () => {
   if (!draft) return;
   const s = find(draft.id);
-  if (s) { s.name = draft.name; s.grades = draft.grades; s.final = draft.final; }
+  if (s) { s.name = draft.name; s.grades = draft.grades; s.notes = draft.notes.map(n => (n || '').trim()); s.final = draft.final; }
   save(); render(); closeSheet();
 });
 $('#shCancel').addEventListener('click', closeSheet);
@@ -413,7 +488,7 @@ $('#nameForm').addEventListener('submit', e => {
 $('#nameCancel').addEventListener('click', closeName);
 $('#add').addEventListener('click', () => {
   openName('Novi predmet', '', v => {
-    const s = { id: uid(), name: v, grades: [], final: null };
+    const s = { id: uid(), name: v, grades: [], notes: [], final: null };
     state.subjects.push(s);
     save(); render(); openSheet(s.id);
   });
@@ -430,6 +505,8 @@ const lsSet = (k, v) => { try { if (v === null) localStorage.removeItem(k); else
 let mode = ['light', 'dark'].includes(lsGet(THEME_KEY)) ? lsGet(THEME_KEY) : 'auto';
 let accent = ACCENTS[lsGet(ACCENT_KEY)] ? lsGet(ACCENT_KEY) : 'indigo';
 const isDark = () => mode === 'dark' || (mode === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+const SORT_KEY = 'ocjene-sort';
+let sortMode = ['az', 'avg-desc', 'avg-asc'].includes(lsGet(SORT_KEY)) ? lsGet(SORT_KEY) : 'added';
 
 function applyLook(){
   const root = document.documentElement;
@@ -442,6 +519,7 @@ function applyLook(){
 }
 function renderSettings(){
   document.querySelectorAll('#modeRow .chip').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+  document.querySelectorAll('#sortRow .chip').forEach(b => b.classList.toggle('on', b.dataset.sort === sortMode));
   $('#accentRow').innerHTML = Object.keys(ACCENTS).map(k =>
     `<button class="sw${k === accent ? ' on' : ''}" data-k="${k}" aria-label="${k}" style="background:${ACCENTS[k][isDark() ? 1 : 0]}"></button>`).join('');
 }
@@ -458,6 +536,13 @@ $('#accentRow').addEventListener('click', e => {
   accent = b.dataset.k;
   lsSet(ACCENT_KEY, accent);
   applyLook(); renderSettings();
+});
+$('#sortRow').addEventListener('click', e => {
+  const b = e.target.closest('[data-sort]');
+  if (!b) return;
+  sortMode = b.dataset.sort;
+  lsSet(SORT_KEY, sortMode === 'added' ? null : sortMode);
+  renderSettings(); render();
 });
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { applyLook(); renderSettings(); }); } catch(e){}
 applyLook();
@@ -485,6 +570,119 @@ $('#wipe').addEventListener('click', () => {
   save(); render(); closeSettings();
 });
 
+/* ---------- goal: what do I need? ---------- */
+const GOALS = [3.5, 4, 4.5, 5];
+const GOAL_KEY = 'ocjene-goal';
+let goal = GOALS.includes(+lsGet(GOAL_KEY)) ? +lsGet(GOAL_KEY) : 4.5;
+let goalOpen = false;
+const oc = n => {
+  const a = n % 10, b = n % 100;
+  return (a === 1 && b !== 11) ? 'ocjenu' : (a >= 2 && a <= 4 && (b < 12 || b > 14)) ? 'ocjene' : 'ocjena';
+};
+
+// Fewest grades to redo (weakest first, redone as 5) so the average of final grades reaches T.
+// Exact: small knapsack over subjects. A final of 1 always has to be lifted.
+function planGoal(T){
+  const subs = state.subjects.map(s => ({ s, f: finalOf(s) })).filter(x => x.f !== null);
+  const n = subs.length;
+  if (!n) return { kind: 'none' };
+  const S = subs.reduce((a, x) => a + x.f, 0);
+  const hasOne = subs.some(x => x.f === 1);
+  let need = Math.ceil(T * n - 1e-9) - S;
+  if (need <= 0 && !hasOne) return { kind: 'done' };
+  need = Math.max(need, 0);
+
+  const opts = subs.map(x => {
+    const g = x.s.grades, f = x.f, manual = !!x.s.final;
+    const order = g.map((v, i) => i).sort((a, b) => g[a] - g[b] || a - b);
+    const out = [];
+    for (let inc = 0; inc <= 5 - f; inc++) {
+      if (inc === 0) { out.push(f === 1 ? null : { cost: 0 }); continue; }
+      if (manual || !g.length) { out.push(null); continue; }
+      let t = 0;
+      const cur = g.slice();
+      while (t < order.length && clamp5(mean(cur)) < f + inc) { cur[order[t]] = 5; t++; }
+      out.push(clamp5(mean(cur)) >= f + inc ? { cost: t, mean: mean(cur), order: order.slice(0, t) } : null);
+    }
+    return out;
+  });
+
+  const INF = 1e9, from = [];
+  let dp = Array(need + 1).fill(INF);
+  dp[0] = 0;
+  opts.forEach(o => {
+    const nd = Array(need + 1).fill(INF), ch = Array(need + 1).fill(null);
+    for (let j = 0; j <= need; j++) {
+      if (dp[j] >= INF) continue;
+      o.forEach((opt, inc) => {
+        if (!opt) return;
+        const j2 = Math.min(need, j + inc), c = dp[j] + opt.cost;
+        if (c < nd[j2]) { nd[j2] = c; ch[j2] = { j, inc }; }
+      });
+    }
+    dp = nd; from.push(ch);
+  });
+  if (dp[need] >= INF) return { kind: 'impossible' };
+
+  const picks = [];
+  let j = need;
+  for (let i = opts.length - 1; i >= 0; i--) {
+    const { j: pj, inc } = from[i][j];
+    if (inc > 0) picks.push({ sub: subs[i], opt: opts[i][inc], inc });
+    j = pj;
+  }
+  picks.sort((a, b) => a.opt.cost - b.opt.cost);
+  return { kind: 'plan', picks };
+}
+
+function renderGoal(){
+  $('#goalRow').innerHTML = GOALS.map(v => `<button class="chip${v === goal ? ' on' : ''}" data-g="${v}">${fmt(v)}</button>`).join('');
+  const finals = state.subjects.map(finalOf).filter(x => x !== null);
+  const o = mean(finals);
+  $('#goalNow').textContent = o === null ? 'Još nema ocjena.'
+    : 'Sada: ' + (finals.includes(1) ? 'Nedovoljan' : fmt(o) + ' · ' + label(o, finals));
+  const p = planGoal(goal);
+  let h = '';
+  if (p.kind === 'none') h = '<div class="ok">Dodaj predmete i ocjene pa ću izračunati što ti treba.</div>';
+  else if (p.kind === 'done') h = '<div class="ok">✅ Već si na cilju.</div>';
+  else if (p.kind === 'impossible') h = '<div class="ok">Ne mogu izračunati jer je neka zaključna ručno postavljena. Vrati je na Auto u predmetu.</div>';
+  else {
+    const tot = p.picks.reduce((a, x) => a + x.opt.cost, 0);
+    const cards = p.picks.map(x => {
+      const s = x.sub.s, f = x.sub.f;
+      const lines = x.opt.order.map(i => `Ocjena ${s.grades[i]} → 5${(s.notes || [])[i] ? ' · ' + esc(s.notes[i]) : ''}`).join('<br>');
+      return `<div class="gcard"><div class="gh"><span>${esc(s.name)}</span><span>${f} → ${f + x.inc}</span></div>
+        <div class="gl">${lines}</div><div class="gl">Prosjek predmeta bi bio ${fmt(x.opt.mean)}</div></div>`;
+    }).join('');
+    h = `<div class="ok">Za ${fmt(goal)} (${label(goal, [])}) najmanje je ispraviti ${tot} ${oc(tot)}:</div>` + cards;
+    const manual = state.subjects.filter(s => s.final).map(s => esc(s.name));
+    if (manual.length) h += `<div class="warn">Ručno postavljena zaključna (ne računam je kao popravljivu): ${manual.join(', ')}.</div>`;
+  }
+  $('#goalOut').innerHTML = h;
+}
+function openGoal(){
+  renderGoal();
+  $('#goal').classList.add('open');
+  goalOpen = true;
+  history.pushState({ goal: 1 }, '');
+}
+function hideGoal(){ goalOpen = false; $('#goal').classList.remove('open'); }
+function closeGoal(){
+  if (!goalOpen) return;
+  hideGoal();
+  if (history.state && history.state.goal) { ignorePop = true; history.back(); }
+}
+$('#goalBtn').addEventListener('click', openGoal);
+$('#goalDone').addEventListener('click', closeGoal);
+$('#goal').addEventListener('click', e => { if (e.target.id === 'goal') closeGoal(); });
+$('#goalRow').addEventListener('click', e => {
+  const b = e.target.closest('[data-g]');
+  if (!b) return;
+  goal = +b.dataset.g;
+  lsSet(GOAL_KEY, String(goal));
+  renderGoal();
+});
+
 /* ---------- export / import ---------- */
 $('#export').addEventListener('click', async () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -509,12 +707,18 @@ $('#file').addEventListener('change', async e => {
   try {
     const d = JSON.parse(await f.text());
     if (!d || !Array.isArray(d.subjects)) throw 0;
-    const clean = d.subjects.map(s => ({
-      id: uid(),
-      name: String(s.name || 'Predmet').slice(0, 40),
-      grades: (Array.isArray(s.grades) ? s.grades : []).map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 5),
-      final: [1,2,3,4,5].includes(s.final) ? s.final : null
-    }));
+    const clean = d.subjects.map(s => {
+      const pairs = (Array.isArray(s.grades) ? s.grades : [])
+        .map((g, i) => [Number(g), String((Array.isArray(s.notes) ? s.notes[i] : '') || '').slice(0, 60)])
+        .filter(([g]) => Number.isInteger(g) && g >= 1 && g <= 5);
+      return {
+        id: uid(),
+        name: String(s.name || 'Predmet').slice(0, 40),
+        grades: pairs.map(p => p[0]),
+        notes: pairs.map(p => p[1]),
+        final: [1,2,3,4,5].includes(s.final) ? s.final : null
+      };
+    });
     if (!confirm('Zamijeniti trenutne podatke uvezenima (' + clean.length + ' predmeta)?')) return;
     state = { subjects: clean };
     save(); render();
@@ -524,7 +728,22 @@ $('#file').addEventListener('change', async e => {
 render();
 
 if ('serviceWorker' in navigator) {
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // a new version took over: reload into it, unless the user is in the middle of editing
+    if (!hadController || reloading || sheetOpen || settingsOpen) return;
+    reloading = true;
+    location.reload();
+  });
+  addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      const check = () => reg.update().catch(() => {});
+      // installed apps are resumed, not reloaded, so look for updates every time the app comes back
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+      check();
+    }).catch(() => {});
+  });
 }
 </script>
 </body>
