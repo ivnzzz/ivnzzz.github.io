@@ -1,1 +1,1 @@
-vibecoded website for calculating grades :)
+vibecoded web-app for calculating grades :)
