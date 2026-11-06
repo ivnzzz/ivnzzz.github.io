@@ -1,5 +1,5 @@
-const CACHE = 'ocjene-v6';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
+const CACHE = 'ocjene-v7';
+const ASSETS = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
   // cache:'reload' skips the browser's HTTP cache, so a stale copy is never stored
