@@ -97,16 +97,23 @@ h1{font-size:28px;margin:0;letter-spacing:-.5px}
 .keys button:active{transform:scale(.95)}
 .clear{width:100%;margin-top:10px;padding:12px;border-radius:14px;border:1px solid var(--line);
   background:none;font-weight:600;color:var(--danger)}
-.finlab{margin:16px 0 6px;color:var(--muted);font-size:14px}
 .chips{display:flex;gap:6px}
 .chip{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--line);background:none;font-weight:700}
 .chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .act{display:flex;gap:10px;margin-top:18px}
 .act button{flex:1;padding:14px;border-radius:14px;font-weight:700;border:0}
 .act .cancel{background:var(--cell)}
-.act .conc{background:none;border:2px solid var(--accent);color:var(--accent)}
-.act .conc:disabled{opacity:.4}
-.chip.sug{border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.concbtn{background:none;border:1.5px solid var(--accent);color:var(--accent);border-radius:10px;
+  padding:6px 10px;font-weight:700;font-size:14px;white-space:nowrap}
+.concbtn:disabled{opacity:.4}
+.cnhint{color:var(--muted);font-size:14px;text-align:center;margin:0 0 14px}
+.cnbox{display:flex;gap:12px}
+.cncol{flex:1;border:1px solid var(--line);border-radius:16px;padding:10px 8px;text-align:center;display:flex;flex-direction:column}
+.cnlab{color:var(--muted);font-size:13px;margin-bottom:6px}
+.cnavg{flex:1;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800}
+.cnopt{display:block;width:100%;padding:9px 0;border:0;background:none;border-radius:12px;font-size:22px;font-weight:800}
+.cnopt + .cnopt{margin-top:2px}
+.cnopt.on{background:var(--accent);color:var(--on-accent)}
 .act .save{background:var(--accent);color:var(--on-accent)}
 
 .modal{width:calc(100% - 32px);max-width:380px;background:var(--card);border-radius:20px;padding:18px}
@@ -190,6 +197,7 @@ body.gated .wrap,body.gated .bottom{display:none}
   <div class="panel" role="dialog" aria-modal="true">
     <div class="ph">
       <h2 id="shTitle"></h2>
+      <button class="concbtn" id="shConclude">Zaključi</button>
       <button class="iconbtn" id="shRename" aria-label="Preimenuj predmet">✎</button>
       <button class="iconbtn" id="shDelete" aria-label="Obriši predmet">🗑</button>
     </div>
@@ -204,10 +212,7 @@ body.gated .wrap,body.gated .bottom{display:none}
       <button class="c5" data-n="5">5</button>
     </div>
     <button class="clear" id="shClear">Obriši</button>
-    <div class="finlab" id="finLab">Zaključna ocjena</div>
-    <div class="chips" id="finRow"></div>
     <div class="act">
-      <button class="conc" id="shConclude">Zaključi</button>
       <button class="cancel" id="shCancel">Otkaži</button>
       <button class="save" id="shSave">Sačuvaj</button>
     </div>
@@ -257,6 +262,22 @@ body.gated .wrap,body.gated .bottom{display:none}
     <div class="setlab">Nova školska godina</div>
     <button class="clear" id="wipe">Obriši sve predmete</button>
     <div class="act"><button class="save" id="setDone">Gotovo</button></div>
+  </div>
+</div>
+
+<!-- conclude dialog -->
+<div class="overlay top" id="cnModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3>Zaključi ocjenu</h3>
+    <p class="cnhint">Promijeni zaključnu ocjenu samo ako je različita od izračunate!</p>
+    <div class="cnbox">
+      <div class="cncol"><div class="cnlab">Prosječna:</div><div class="cnavg" id="cnAvg">–</div></div>
+      <div class="cncol"><div class="cnlab">Zaključna:</div><div id="cnPick"></div></div>
+    </div>
+    <div class="act">
+      <button type="button" class="cancel" id="cnCancel">Otkaži</button>
+      <button type="button" class="save" id="cnSave">Sačuvaj</button>
+    </div>
   </div>
 </div>
 
@@ -402,7 +423,6 @@ $('#list').addEventListener('click', e => {
 
 /* ---------- subject sheet ---------- */
 let draft = null, sel = 0, sheetOpen = false, ignorePop = false, nameCb = null;
-let pickVal = null;   // final grade chosen with the 1-5 chips but not locked yet
 const snap = d => JSON.stringify([d.name, d.grades, d.notes, d.final]);
 
 function openSheet(id){
@@ -411,13 +431,12 @@ function openSheet(id){
   draft = { id: s.id, name: s.name, grades: s.grades.slice(), notes: (s.notes || []).slice(), final: s.final || null };
   draft.orig = snap(draft);
   sel = draft.grades.length;
-  pickVal = null;
   renderSheet();
   $('#sheet').classList.add('open');
   sheetOpen = true;
   history.pushState({ sheet: 1 }, '');
 }
-function hideSheet(){ sheetOpen = false; draft = null; $('#sheet').classList.remove('open'); }
+function hideSheet(){ sheetOpen = false; draft = null; hideCn(); $('#sheet').classList.remove('open'); }
 function closeSheet(){
   if (!sheetOpen) return;
   hideSheet();
@@ -426,6 +445,7 @@ function closeSheet(){
 // Android back button / iOS swipe closes the sheet instead of leaving the app
 addEventListener('popstate', () => {
   if (ignorePop) { ignorePop = false; return; }
+  if (cnOpen) { hideCn(); history.pushState({ sheet: 1 }, ''); return; }   // back closes only the dialog, the subject stays open
   closeName();
   if (sheetOpen) hideSheet();
   if (settingsOpen) hideSettings();
@@ -439,7 +459,7 @@ function renderSheet(){
   const p = $('#shPill');
   p.className = 'pill ' + (m === null ? 'none' : gc(m));
   p.textContent = m === null ? '–' : fmt(m);
-  $('#shFin').textContent = f !== null ? 'zaključna ' + f : '';
+  $('#shFin').textContent = f !== null ? 'zaključna ' + f + (draft.final ? ' 🔒' : '') : '';
   const rk = riskOf(g, draft.final);
   $('#shRisk').textContent = rk ? '⚠ ' + riskText(rk) : '';
   $('#shRisk').hidden = !rk;
@@ -456,14 +476,8 @@ function renderSheet(){
   ni.value = has ? (draft.notes[sel] || '') : '';
   ni.placeholder = has ? 'Bilješka za ocjenu ' + g[sel] + ' (npr. kontrolna iz…)' : 'Dodirni ocjenu u tablici za bilješku';
 
-  // final grade: locked = solid chip, otherwise the outlined chip is only the proposal (rounded average)
-  const locked = !!draft.final, prop = g.length ? clamp5(m) : null, shown = draft.final || pickVal || prop;
-  $('#finLab').textContent = locked ? '🔒 Zaključeno' : (prop ? 'Zaključna ocjena · prijedlog ' + prop : 'Zaključna ocjena');
-  $('#finRow').innerHTML = [1, 2, 3, 4, 5]
-    .map(v => `<button class="chip${v === shown ? (locked ? ' on' : ' sug') : ''}" data-f="${v}">${v}</button>`).join('');
-  const cb = $('#shConclude');
-  cb.textContent = locked ? 'Otključaj' : 'Zaključi';
-  cb.disabled = !locked && !g.length;
+  $('#shConclude').disabled = !g.length && !draft.final;
+  $('#shConclude').textContent = draft.final ? '🔒 Zaključi' : 'Zaključi';
 }
 
 function press(n){
@@ -497,13 +511,6 @@ $('#noteInput').addEventListener('input', e => {
   if (c) c.classList.toggle('note', !!e.target.value.trim());
 });
 $('#noteInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
-$('#finRow').addEventListener('click', e => {
-  const b = e.target.closest('[data-f]');
-  if (!b || !draft) return;
-  const v = +b.dataset.f;
-  if (draft.final) draft.final = v; else pickVal = v;   // locked: changes the final grade; open: only chooses what Zaključi locks
-  renderSheet();
-});
 function saveSheet(){
   if (!draft) return;
   const s = find(draft.id);
@@ -511,13 +518,38 @@ function saveSheet(){
   save(); render(); closeSheet();
 }
 $('#shSave').addEventListener('click', saveSheet);
-$('#shConclude').addEventListener('click', () => {
+/* ---------- conclude dialog: override the calculated final grade ---------- */
+let cnVal = null, cnOpen = false;
+const cnProp = () => draft.grades.length ? clamp5(mean(draft.grades)) : null;
+function renderCn(){
+  const g = draft.grades;
+  $('#cnAvg').textContent = g.length ? fmt(mean(g)) : '–';
+  $('#cnPick').innerHTML = [1, 2, 3, 4, 5]
+    .map(v => `<button class="cnopt${v === cnVal ? ' on' : ''}" data-v="${v}">${v},00</button>`).join('');
+}
+function openCn(){
+  if (!draft || (!draft.grades.length && !draft.final)) return;
+  cnVal = draft.final || cnProp();
+  renderCn();
+  $('#cnModal').classList.add('open');
+  cnOpen = true;
+}
+function hideCn(){ cnOpen = false; $('#cnModal').classList.remove('open'); }
+$('#shConclude').addEventListener('click', openCn);
+$('#cnPick').addEventListener('click', e => {
+  const b = e.target.closest('[data-v]');
+  if (!b || !draft) return;
+  cnVal = +b.dataset.v;
+  renderCn();
+});
+$('#cnCancel').addEventListener('click', hideCn);
+$('#cnModal').addEventListener('click', e => { if (e.target.id === 'cnModal') hideCn(); });
+$('#cnSave').addEventListener('click', () => {
   if (!draft) return;
-  if (draft.final) draft.final = null;                                   // Otključaj
-  else if (draft.grades.length) draft.final = pickVal || clamp5(mean(draft.grades));
-  else return;
-  pickVal = null;
-  saveSheet();                                                           // locking saves the subject and closes it
+  // same as the calculated grade = nothing to override, the subject keeps following its average
+  draft.final = cnVal === cnProp() ? null : cnVal;
+  hideCn();
+  saveSheet();
 });
 $('#shCancel').addEventListener('click', closeSheet);
 $('#sheet').addEventListener('click', e => {
