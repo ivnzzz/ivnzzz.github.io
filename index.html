@@ -104,6 +104,9 @@ h1{font-size:28px;margin:0;letter-spacing:-.5px}
 .act{display:flex;gap:10px;margin-top:18px}
 .act button{flex:1;padding:14px;border-radius:14px;font-weight:700;border:0}
 .act .cancel{background:var(--cell)}
+.act .conc{background:none;border:2px solid var(--accent);color:var(--accent)}
+.act .conc:disabled{opacity:.4}
+.chip.sug{border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .act .save{background:var(--accent);color:var(--on-accent)}
 
 .modal{width:calc(100% - 32px);max-width:380px;background:var(--card);border-radius:20px;padding:18px}
@@ -124,20 +127,15 @@ input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px soli
 .chips.goals b{font-size:22px;line-height:1.1}
 .chips.goals span{font-size:12px;font-weight:600;opacity:.85}
 
-.hbtns{display:flex;align-items:center;gap:4px}
-.pillbtn{background:var(--accent);color:var(--on-accent);border:0;border-radius:12px;padding:8px 14px;font-weight:700;font-size:15px}
-.swwrap{display:flex;gap:12px;flex-wrap:wrap}
+.swwrap{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;padding:6px 4px 10px;margin:0 -4px;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.swwrap::-webkit-scrollbar{display:none}
+.swwrap .sw{flex:0 0 40px;scroll-snap-align:center}
 .swwrap .swatches{display:contents}
 .sw.custom{position:relative;display:inline-block;overflow:hidden;cursor:pointer;
   background:conic-gradient(#ef4444,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ef4444)}
 .sw.custom input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
 
-.cnsec{margin:16px 0 2px;color:var(--muted);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.cnrow{padding:10px 0 12px;border-top:1px solid var(--line)}
-.cnsec + .cnrow{border-top:0}
-.cnh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
-.cnh .t{font-weight:700}
-.cnm{color:var(--muted);font-size:13px;white-space:nowrap}
 input:disabled{opacity:.5}
 .note-in{margin:0 0 12px}
 .cell{position:relative}
@@ -175,10 +173,7 @@ body.gated .wrap,body.gated .bottom{display:none}
 <div class="wrap">
   <header>
     <h1>Ocjene</h1>
-    <div class="hbtns">
-      <button class="pillbtn" id="concludeBtn">Zaključi</button>
-      <button class="iconbtn" id="settingsBtn" aria-label="Postavke">⚙️</button>
-    </div>
+    <button class="iconbtn" id="settingsBtn" aria-label="Postavke">⚙️</button>
   </header>
   <div id="list"></div>
 </div>
@@ -209,24 +204,12 @@ body.gated .wrap,body.gated .bottom{display:none}
       <button class="c5" data-n="5">5</button>
     </div>
     <button class="clear" id="shClear">Obriši</button>
-    <div class="finlab">Zaključna ocjena</div>
+    <div class="finlab" id="finLab">Zaključna ocjena</div>
     <div class="chips" id="finRow"></div>
     <div class="act">
+      <button class="conc" id="shConclude">Zaključi</button>
       <button class="cancel" id="shCancel">Otkaži</button>
       <button class="save" id="shSave">Sačuvaj</button>
-    </div>
-  </div>
-</div>
-
-<!-- conclude -->
-<div class="overlay" id="conclude">
-  <div class="panel" role="dialog" aria-modal="true">
-    <div class="ph"><h2>Zaključi ocjene</h2></div>
-    <p class="hint">Odaberi zaključnu ocjenu za svaki predmet. Zaključena ocjena se ne mijenja kad dodaš nove ocjene. „Auto“ ostavlja predmet nezaključen.</p>
-    <div id="cnList"></div>
-    <div class="act">
-      <button class="cancel" id="cnCancel">Otkaži</button>
-      <button class="save" id="cnSave">Zaključi</button>
     </div>
   </div>
 </div>
@@ -419,6 +402,7 @@ $('#list').addEventListener('click', e => {
 
 /* ---------- subject sheet ---------- */
 let draft = null, sel = 0, sheetOpen = false, ignorePop = false, nameCb = null;
+let pickVal = null;   // final grade chosen with the 1-5 chips but not locked yet
 const snap = d => JSON.stringify([d.name, d.grades, d.notes, d.final]);
 
 function openSheet(id){
@@ -427,6 +411,7 @@ function openSheet(id){
   draft = { id: s.id, name: s.name, grades: s.grades.slice(), notes: (s.notes || []).slice(), final: s.final || null };
   draft.orig = snap(draft);
   sel = draft.grades.length;
+  pickVal = null;
   renderSheet();
   $('#sheet').classList.add('open');
   sheetOpen = true;
@@ -445,7 +430,6 @@ addEventListener('popstate', () => {
   if (sheetOpen) hideSheet();
   if (settingsOpen) hideSettings();
   if (goalOpen) hideGoal();
-  if (concludeOpen) hideConclude();
 });
 
 function renderSheet(){
@@ -472,8 +456,14 @@ function renderSheet(){
   ni.value = has ? (draft.notes[sel] || '') : '';
   ni.placeholder = has ? 'Bilješka za ocjenu ' + g[sel] + ' (npr. kontrolna iz…)' : 'Dodirni ocjenu u tablici za bilješku';
 
-  $('#finRow').innerHTML = [['', 'Auto'], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]]
-    .map(([v, t]) => `<button class="chip${(draft.final || '') === v ? ' on' : ''}" data-f="${v}">${t}</button>`).join('');
+  // final grade: locked = solid chip, otherwise the outlined chip is only the proposal (rounded average)
+  const locked = !!draft.final, prop = g.length ? clamp5(m) : null, shown = draft.final || pickVal || prop;
+  $('#finLab').textContent = locked ? '🔒 Zaključeno' : (prop ? 'Zaključna ocjena · prijedlog ' + prop : 'Zaključna ocjena');
+  $('#finRow').innerHTML = [1, 2, 3, 4, 5]
+    .map(v => `<button class="chip${v === shown ? (locked ? ' on' : ' sug') : ''}" data-f="${v}">${v}</button>`).join('');
+  const cb = $('#shConclude');
+  cb.textContent = locked ? 'Otključaj' : 'Zaključi';
+  cb.disabled = !locked && !g.length;
 }
 
 function press(n){
@@ -510,14 +500,24 @@ $('#noteInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.targ
 $('#finRow').addEventListener('click', e => {
   const b = e.target.closest('[data-f]');
   if (!b || !draft) return;
-  draft.final = b.dataset.f === '' ? null : +b.dataset.f;
+  const v = +b.dataset.f;
+  if (draft.final) draft.final = v; else pickVal = v;   // locked: changes the final grade; open: only chooses what Zaključi locks
   renderSheet();
 });
-$('#shSave').addEventListener('click', () => {
+function saveSheet(){
   if (!draft) return;
   const s = find(draft.id);
   if (s) { s.name = draft.name; s.grades = draft.grades; s.notes = draft.notes.map(n => (n || '').trim()); s.final = draft.final; }
   save(); render(); closeSheet();
+}
+$('#shSave').addEventListener('click', saveSheet);
+$('#shConclude').addEventListener('click', () => {
+  if (!draft) return;
+  if (draft.final) draft.final = null;                                   // Otključaj
+  else if (draft.grades.length) draft.final = pickVal || clamp5(mean(draft.grades));
+  else return;
+  pickVal = null;
+  saveSheet();                                                           // locking saves the subject and closes it
 });
 $('#shCancel').addEventListener('click', closeSheet);
 $('#sheet').addEventListener('click', e => {
@@ -650,6 +650,10 @@ function openSettings(){
   $('#settings').classList.add('open');
   settingsOpen = true;
   history.pushState({ settings: 1 }, '');
+  try {   // bring the chosen colour into view in the sideways list
+    const on = document.querySelector('#accentRow .sw.on, #swCustom.on');
+    if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+  } catch(e){}
 }
 function hideSettings(){ settingsOpen = false; $('#settings').classList.remove('open'); }
 function closeSettings(){
@@ -787,58 +791,6 @@ $('#goalRow').addEventListener('click', e => {
   renderGoal();
 });
 
-/* ---------- conclude: lock final grades ---------- */
-let concludeOpen = false, cnSel = {}, cnInit = '';
-const proposal = s => clamp5(mean(s.grades));
-function openConclude(){
-  cnSel = {};
-  // start from the current final grade, or the rounded average as the proposal
-  state.subjects.forEach(s => { if (s.grades.length) cnSel[s.id] = s.final || proposal(s); });
-  cnInit = JSON.stringify(cnSel);
-  renderConclude();
-  $('#conclude').classList.add('open');
-  concludeOpen = true;
-  history.pushState({ conclude: 1 }, '');
-}
-function renderConclude(){
-  const subs = ordered().filter(s => s.grades.length);
-  const row = s => {
-    const v = cnSel[s.id];
-    const chips = [['', 'Auto'], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]]
-      .map(([val, t]) => `<button class="chip${(v || '') === val ? ' on' : ''}" data-id="${s.id}" data-v="${val}">${t}</button>`).join('');
-    return `<div class="cnrow"><div class="cnh"><span class="t">${esc(s.name)}</span><span class="cnm">prosjek ${fmt(mean(s.grades))}</span></div><div class="chips">${chips}</div></div>`;
-  };
-  const todo = subs.filter(s => !s.final), done = subs.filter(s => s.final);
-  let h = '';
-  if (!subs.length) h = '<div class="ok">Nema predmeta s ocjenama.</div>';
-  else {
-    if (todo.length) h += `<div class="cnsec">Za zaključiti (${todo.length})</div>` + todo.map(row).join('');
-    if (done.length) h += `<div class="cnsec">Već zaključeno (${done.length})</div>` + done.map(row).join('');
-  }
-  $('#cnList').innerHTML = h;
-}
-function hideConclude(){ concludeOpen = false; $('#conclude').classList.remove('open'); }
-function closeConclude(){
-  if (!concludeOpen) return;
-  hideConclude();
-  if (history.state && history.state.conclude) { ignorePop = true; history.back(); }
-}
-$('#concludeBtn').addEventListener('click', openConclude);
-$('#cnCancel').addEventListener('click', closeConclude);
-$('#conclude').addEventListener('click', e => {
-  if (e.target.id === 'conclude' && JSON.stringify(cnSel) === cnInit) closeConclude();
-});
-$('#cnList').addEventListener('click', e => {
-  const b = e.target.closest('[data-v]');
-  if (!b) return;
-  cnSel[b.dataset.id] = b.dataset.v === '' ? null : +b.dataset.v;
-  renderConclude();
-});
-$('#cnSave').addEventListener('click', () => {
-  Object.keys(cnSel).forEach(id => { const s = find(id); if (s) s.final = cnSel[id] || null; });
-  save(); render(); closeConclude();
-});
-
 /* ---------- export / import ---------- */
 $('#export').addEventListener('click', async () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -888,7 +840,7 @@ if ('serviceWorker' in navigator) {
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     // a new version took over: reload into it, unless the user is in the middle of editing
-    if (!hadController || reloading || sheetOpen || settingsOpen || goalOpen || concludeOpen) return;
+    if (!hadController || reloading || sheetOpen || settingsOpen || goalOpen) return;
     reloading = true;
     location.reload();
   });
